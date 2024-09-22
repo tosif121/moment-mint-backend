@@ -1,4 +1,5 @@
 const admin = require('../services/firebase');
+const { User } = require('../models');
 
 exports.getAllUsers = async (req, res) => {
   try {
@@ -6,16 +7,21 @@ exports.getAllUsers = async (req, res) => {
     const users = listUsersResult.users.map((userRecord) => ({
       uid: userRecord.uid,
       email: userRecord.email,
-      displayName: userRecord.displayName,
-      photoURL: userRecord.photoURL,
     }));
+
+    await Promise.all(
+      users.map(async (user) => {
+        await User.upsert(user);
+      })
+    );
 
     res.status(200).json({
       status: true,
-      message: 'All users retrieved successfully',
+      message: 'All users retrieved and stored successfully',
       data: users,
     });
   } catch (error) {
+    console.error('Error retrieving users:', error);
     res.status(500).json({
       status: false,
       message: 'Internal server error',
@@ -36,12 +42,19 @@ exports.getCurrentUser = async (req, res) => {
     }
 
     const userRecord = await admin.auth().getUser(uid);
+    const userFromDB = await User.findOne({ where: { uid } });
 
     const user = {
       uid: userRecord.uid,
       email: userRecord.email,
-      displayName: userRecord.displayName,
-      photoURL: userRecord.photoURL,
+      displayName: userRecord.displayName || null,
+      photoURL: userRecord.photoURL || null,
+      userName: email.split('@')[0],
+      followingCount: userFromDB ? userFromDB.followingCount : 0,
+      followersCount: userFromDB ? userFromDB.followersCount : 0,
+      streak: userFromDB ? userFromDB.streak : 0,
+      coins: userFromDB ? userFromDB.coins : 0,
+      bio: userFromDB ? userFromDB.bio : null,
     };
 
     res.status(200).json({
@@ -63,3 +76,4 @@ exports.getCurrentUser = async (req, res) => {
     });
   }
 };
+

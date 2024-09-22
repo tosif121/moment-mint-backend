@@ -1,3 +1,4 @@
+const mysql = require('mysql2');
 const express = require('express');
 const cors = require('cors');
 const userRoutes = require('./src/routes/usersRoutes');
