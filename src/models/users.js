@@ -45,6 +45,18 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         defaultValue: 0,
       },
+      mobile: {
+        type: DataTypes.BIGINT,
+        allowNull: true,
+      },
+      dob: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      gender: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       bio: {
         type: DataTypes.TEXT,
         allowNull: true,
@@ -54,7 +66,6 @@ module.exports = (sequelize, DataTypes) => {
       timestamps: true,
     }
   );
-  // User.sync({ alter: true });
 
   return User;
 };

@@ -1,27 +1,24 @@
-const admin = require('../services/firebase');
 const { User } = require('../models');
+const DEFAULT_BIO = 'Mint for the moment';
+const DEFAULT_IMAGE = '/pic.png';
 
-exports.getAllUsers = async (req, res) => {
+// Create a new user
+const createUser = async (req, res) => {
   try {
-    const listUsersResult = await admin.auth().listUsers();
-    const users = listUsersResult.users.map((userRecord) => ({
-      uid: userRecord.uid,
-      email: userRecord.email,
-    }));
+    const { uid, email, userName } = req.body;
 
-    await Promise.all(
-      users.map(async (user) => {
-        await User.upsert(user);
-      })
-    );
+    const user = await User.create({
+      uid,
+      email,
+      userName,
+    });
 
-    res.status(200).json({
+    res.status(201).json({
       status: true,
-      message: 'All users retrieved and stored successfully',
-      data: users,
+      message: 'User created successfully',
+      data: user,
     });
   } catch (error) {
-    console.error('Error retrieving users:', error);
     res.status(500).json({
       status: false,
       message: 'Internal server error',
@@ -30,45 +27,53 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-exports.getCurrentUser = async (req, res) => {
+// Get all users
+const getAllUsers = async (req, res) => {
   try {
-    const { uid } = req.params;
-
-    if (!uid) {
-      return res.status(400).json({
-        status: false,
-        message: 'Bad Request: UID is required',
-      });
-    }
-
-    const userRecord = await admin.auth().getUser(uid);
-    const userFromDB = await User.findOne({ where: { uid } });
-
-    const user = {
-      uid: userRecord.uid,
-      email: userRecord.email,
-      displayName: userRecord.displayName || null,
-      photoURL: userRecord.photoURL || null,
-      userName: email.split('@')[0],
-      followingCount: userFromDB ? userFromDB.followingCount : 0,
-      followersCount: userFromDB ? userFromDB.followersCount : 0,
-      streak: userFromDB ? userFromDB.streak : 0,
-      coins: userFromDB ? userFromDB.coins : 0,
-      bio: userFromDB ? userFromDB.bio : null,
-    };
+    const users = await User.findAll();
 
     res.status(200).json({
       status: true,
-      message: 'Current user retrieved successfully',
-      data: user,
+      message: 'Users retrieved successfully',
+      data: users,
     });
   } catch (error) {
-    if (error.code === 'auth/user-not-found') {
+    res.status(500).json({
+      status: false,
+      message: 'Internal server error',
+      error: error.message,
+    });
+  }
+};
+
+// Get a user by ID
+const getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findByPk(id);
+
+    if (!user) {
       return res.status(404).json({
         status: false,
         message: 'User not found',
       });
     }
+
+    const slicedDisplayName = user.displayName ? user.displayName.slice(0, 10) : null;
+
+    const userWithDefaults = {
+      ...user.toJSON(),
+      displayName: slicedDisplayName,
+      bio: user.bio || DEFAULT_BIO,
+      photoURL: user.photoURL || DEFAULT_IMAGE,
+    };
+
+    res.status(200).json({
+      status: true,
+      message: 'User retrieved successfully',
+      data: userWithDefaults,
+    });
+  } catch (error) {
     res.status(500).json({
       status: false,
       message: 'Internal server error',
@@ -77,3 +82,77 @@ exports.getCurrentUser = async (req, res) => {
   }
 };
 
+// Update a user by ID
+const updateUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { displayName, photoURL, bio, userName, mobile, dob, gender } = req.body;
+
+    const user = await User.findByPk(id);
+
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: 'User not found',
+      });
+    }
+
+    await user.update({
+      displayName: displayName || user.displayName,
+      photoURL: photoURL || user.photoURL,
+      bio: bio || user.bio,
+      userName: userName || user.userName,
+      mobile: mobile || user.mobile,
+      dob: dob || user.dob,
+      gender: gender || user.gender,
+    });
+
+    res.status(200).json({
+      status: true,
+      message: 'User updated successfully',
+      data: user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: 'Internal server error',
+      error: error.message,
+    });
+  }
+};
+
+// Delete a user by ID
+const deleteUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByPk(id);
+
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: 'User not found',
+      });
+    }
+
+    await user.destroy();
+    res.status(200).json({
+      status: true,
+      message: 'User deleted successfully',
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: 'Internal server error',
+      error: error.message,
+    });
+  }
+};
+
+module.exports = {
+  createUser,
+  getAllUsers,
+  getUserById,
+  updateUserById,
+  deleteUserById,
+};
