@@ -1,19 +1,19 @@
 const { User } = require('../models');
-const DEFAULT_BIO = 'Mint for the moment';
-const DEFAULT_IMAGE = '/pic.png';
 
 // Create a new user
 const createUser = async (req, res) => {
   try {
-    const { uid, email, userName } = req.body;
+    const { uid, email, userName, photoURL, bio } = req.body;
 
     const user = await User.create({
       uid,
       email,
       userName,
+      photoURL,
+      bio,
     });
 
-    res.status(201).json({
+    res.status(200).json({
       status: true,
       message: 'User created successfully',
       data: user,
@@ -59,19 +59,9 @@ const getUserById = async (req, res) => {
       });
     }
 
-    const slicedDisplayName = user.displayName ? user.displayName.slice(0, 10) : null;
-
-    const userWithDefaults = {
-      ...user.toJSON(),
-      displayName: slicedDisplayName,
-      bio: user.bio || DEFAULT_BIO,
-      photoURL: user.photoURL || DEFAULT_IMAGE,
-    };
-
     res.status(200).json({
       status: true,
       message: 'User retrieved successfully',
-      data: userWithDefaults,
     });
   } catch (error) {
     res.status(500).json({
