@@ -1,5 +1,6 @@
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const { fromEnv } = require('@aws-sdk/credential-providers');
+const { createPost } = require('./postController');
 
 const { AWS_REGION, AWS_S3_BUCKET } = process.env;
 
@@ -17,7 +18,6 @@ async function uploadImageToS3(folderName, file, userId) {
     Key: `${folderName}/${fileName}`,
     Body: file.buffer,
     ContentType: file.mimetype,
-    // ACL: 'public-read',
   };
 
   try {
@@ -36,34 +36,37 @@ async function uploadImageToS3(folderName, file, userId) {
 }
 
 exports.uploadImage = async (req, res) => {
-  console.log('Received upload request');
-  console.log('Request body:', req.body);
-  console.log('Request file:', req.file);
-
   const file = req.file;
-  const { userId, uploadType } = req.body;
-  
+  const { userId, uploadType, activity } = req.body;
+
+  console.log('Received upload request:', { userId, uploadType, activity }); // Add this line for debugging
+
   if (!file) {
-    console.log('No file uploaded');
     return res.status(400).json({ status: false, message: 'No file uploaded' });
   }
 
   if (file.size > 52428800) {
-    console.log('File too large');
     return res.status(400).json({ status: false, message: 'File size must be less than 50MB' });
   }
 
   const folderName = uploadType === 'profile' ? 'profiles' : 'posts';
 
   try {
-    console.log('Attempting to upload to S3');
+    // Upload the image to S3
     const uploadResult = await uploadImageToS3(folderName, file, userId);
-    console.log('S3 upload result:', uploadResult);
 
+    // Create the post after successful image upload
+    const post = await createPost({
+      uid: userId,
+      activity,
+      imageUrl: uploadResult.url,
+    });
+
+    // Send a response with the complete post data
     res.status(200).json({
       status: true,
       message: `${uploadType === 'profile' ? 'Profile picture' : 'Post'} uploaded successfully`,
-      data: uploadResult,
+      data: { uploadResult, post },
     });
   } catch (error) {
     console.error('Upload process error:', error);
@@ -74,6 +77,7 @@ exports.uploadImage = async (req, res) => {
     });
   }
 };
+
 
 exports.getUserProfile = async (req, res) => {
   const { userId } = req.params;

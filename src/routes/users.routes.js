@@ -12,7 +12,7 @@ router.post('/createUser', createUser);
 
 router.get('/getAllUsers', getAllUsers);
 
-router.get('/getUserById/:id', getUserById);
+router.get('/getUserById/:uid', getUserById);
 
 router.post('/updateUser/:id', updateUserById);
 

@@ -10,7 +10,6 @@ const createUser = async (req, res) => {
       email,
       userName,
       photoURL,
-      bio,
     });
 
     res.status(200).json({
@@ -47,21 +46,22 @@ const getAllUsers = async (req, res) => {
 };
 
 // Get a user by ID
+
 const getUserById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const user = await User.findByPk(id);
+    const { uid } = req.params;
 
+    const user = await User.findOne({ where: { uid } });
     if (!user) {
       return res.status(404).json({
         status: false,
         message: 'User not found',
       });
     }
-
     res.status(200).json({
       status: true,
       message: 'User retrieved successfully',
+      user,
     });
   } catch (error) {
     res.status(500).json({

@@ -64,9 +64,13 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       timestamps: true,
+      tableName: 'Users',
     }
   );
-  // User.sync({ alter: true });
+
+  User.associate = (models) => {
+    User.hasMany(models.Post, { foreignKey: 'uid', as: 'posts' });
+  };
 
   return User;
 };
