@@ -2,64 +2,77 @@ module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define(
     'User',
     {
-      uid: {
-        type: DataTypes.STRING,
+      id: {
+        type: DataTypes.INTEGER,
         allowNull: false,
-        unique: true,
+        primaryKey: true,
+        autoIncrement: true,
       },
       email: {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true,
+        validate: {
+          isEmail: true,
+        },
       },
       userName: {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true,
+        validate: {
+          len: [3, 30],
+        },
       },
       displayName: {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      photoURL: {
+      profileImg: {
         type: DataTypes.STRING,
         allowNull: true,
       },
       followingCount: {
         type: DataTypes.INTEGER,
-        allowNull: true,
+        allowNull: false,
         defaultValue: 0,
       },
       followersCount: {
         type: DataTypes.INTEGER,
-        allowNull: true,
+        allowNull: false,
         defaultValue: 0,
       },
       streak: {
         type: DataTypes.INTEGER,
-        allowNull: true,
+        allowNull: false,
         defaultValue: 0,
       },
       coins: {
         type: DataTypes.INTEGER,
-        allowNull: true,
+        allowNull: false,
         defaultValue: 0,
       },
       mobile: {
-        type: DataTypes.BIGINT,
+        type: DataTypes.STRING,
         allowNull: true,
+        validate: {
+          is: /^[0-9]+$/,
+        },
       },
       dob: {
-        type: DataTypes.DATE,
+        type: DataTypes.DATEONLY,
         allowNull: true,
       },
       gender: {
-        type: DataTypes.STRING,
+        type: DataTypes.ENUM('male', 'female', 'other'),
         allowNull: true,
       },
       bio: {
         type: DataTypes.TEXT,
         allowNull: true,
+        validate: {
+          len: [0, 500],
+        },
       },
     },
     {
@@ -69,7 +82,11 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   User.associate = (models) => {
-    User.hasMany(models.Post, { foreignKey: 'uid', as: 'posts' });
+    User.hasMany(models.Post, { foreignKey: 'userId', as: 'posts' });
+    User.hasMany(models.Comment, { foreignKey: 'userId', as: 'comments' });
+    User.hasMany(models.Like, { foreignKey: 'userId', as: 'likes' });
+    User.hasMany(models.Follow, { foreignKey: 'followerId', as: 'following' });
+    User.hasMany(models.Follow, { foreignKey: 'followingId', as: 'followers' });
   };
 
   return User;

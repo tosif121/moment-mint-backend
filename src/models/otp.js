@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       timestamps: true,
-      tableName: 'otp_verification',
+      tableName: 'Otp',
     }
   );
   // Otp.sync({ alter: true });

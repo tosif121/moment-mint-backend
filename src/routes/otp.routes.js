@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { verifyOtp, checkMobileNumber } = require('../controllers/otpController');
 
-router.post('/verify-otp', verifyOtp);
+router.post('/verifyOtp', verifyOtp);
 
-router.post('/check-mobile-number', checkMobileNumber);
+router.post('/checkMobileNumber', checkMobileNumber);
 
 module.exports = router;
