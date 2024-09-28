@@ -1,8 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const userRoutes = require('./src/routes/users.routes');
-const userPostRoutes = require('./src/routes/post.routes');
-const userImageRoutes = require('./src/routes/upload.routes');
+const postRoutes = require('./src/routes/post.routes');
+const imageRoutes = require('./src/routes/upload.routes');
+const otpRoutes = require('./src/routes/otp.routes');
 const app = express();
 const dotenv = require('dotenv').config();
 
@@ -10,7 +11,7 @@ app.use(cors());
 
 app.use(express.json());
 
-app.use('/api', userRoutes, userImageRoutes, userPostRoutes);
+app.use('/api', userRoutes, imageRoutes, postRoutes, otpRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
