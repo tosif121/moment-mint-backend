@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middlewares/authMiddleware');
-const FollowController = require('../controllers/followController');
+const { toggleFollow, getFollowers, getFollowing } = require('../controllers/followController');
 
 // Follow routes
-router.post('/', authMiddleware, FollowController.toggleFollow);
-router.get('/users/:userId/followers', authMiddleware, FollowController.getFollowers);
-router.get('/users/:userId/following', authMiddleware, FollowController.getFollowing);
+router.post('/toggleFollow', authMiddleware, toggleFollow);
+router.get('/users/:userId/followers', authMiddleware, getFollowers);
+router.get('/users/:userId/following', authMiddleware, getFollowing);
 
 module.exports = router;
