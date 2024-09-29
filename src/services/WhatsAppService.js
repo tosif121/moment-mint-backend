@@ -1,46 +1,27 @@
 const { Client } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
-const puppeteer = require('puppeteer-core');
 
 class WhatsAppService {
   constructor() {
-    this.initialize();
-  }
+    this.client = new Client(); // Default Puppeteer options are used
 
-  async initialize() {
-    try {
-      const browser = await puppeteer.launch({
-        headless: true, // or false to see the browser UI
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      });
-      // Create a new WhatsApp client with the launched browser
-      this.client = new Client({
-        puppeteer: {
-          browser, // Use the launched browser instance
-        },
-      });
+    this.client.on('qr', (qr) => {
+      qrcode.generate(qr, { small: true });
+      console.log('QR RECEIVED', qr);
+    });
 
-      this.client.on('qr', (qr) => {
-        qrcode.generate(qr, { small: true });
-        console.log('QR RECEIVED', qr);
-      });
+    this.client.on('ready', () => {
+      console.log('WhatsApp client is ready!');
+      this.isReady = true; // Set a flag to indicate readiness
+    });
 
-      this.client.on('ready', () => {
-        console.log('WhatsApp client is ready!');
-        this.isReady = true;
-      });
+    this.client.on('disconnected', (reason) => {
+      console.log('Client was logged out:', reason);
+      this.isReady = false; // Reset readiness flag
+    });
 
-      this.client.on('disconnected', (reason) => {
-        console.log('Client was logged out:', reason);
-        this.isReady = false;
-      });
-
-      this.isReady = false;
-      await this.client.initialize();
-    } catch (error) {
-      console.error('Failed to initialize WhatsApp client:', error);
-      throw error;
-    }
+    this.isReady = false; // Flag to track if the client is ready
+    this.client.initialize();
   }
 
   async sendMessage(to, message) {
@@ -48,21 +29,18 @@ class WhatsAppService {
       throw new Error('WhatsApp client is not ready. Please try again later.');
     }
 
-    const chatId = to.replace('+', '') + '@c.us';
+    const chatId = to.replace('+', '') + '@c.us'; // Format the chat ID correctly
     try {
       await this.client.sendMessage(chatId, message);
       console.log(`Message sent to ${to}: ${message}`);
     } catch (error) {
       console.error(`Failed to send message: ${error.message}`);
-      throw error;
     }
   }
 
   async disconnect() {
-    if (this.client) {
-      await this.client.destroy();
-      console.log('WhatsApp client disconnected.');
-    }
+    await this.client.destroy();
+    console.log('WhatsApp client disconnected.');
   }
 }
 
