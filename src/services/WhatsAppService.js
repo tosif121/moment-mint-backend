@@ -4,38 +4,49 @@ const puppeteer = require('puppeteer');
 
 class WhatsAppService {
   constructor() {
-    // Initialize Puppeteer with custom options
-    const puppeteerOptions = {
-      headless: true, // Run in headless mode
-      args: [
-        '--no-sandbox', // Bypass OS security model
-        '--disable-setuid-sandbox', // Bypass the setuid sandbox
-        '--disable-dev-shm-usage', // Overcome limited resource problems
-      ],
-    };
+    this.initialize();
+  }
 
-    // Create a new WhatsApp client with Puppeteer options
-    this.client = new Client({
-      puppeteer: puppeteerOptions,
-    });
+  async initialize() {
+    try {
+      // Launch the browser using Puppeteer's default bundled Chromium
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+        ],
+      });
 
-    this.client.on('qr', (qr) => {
-      qrcode.generate(qr, { small: true });
-      console.log('QR RECEIVED', qr);
-    });
+      // Create a new WhatsApp client with the launched browser
+      this.client = new Client({
+        puppeteer: {
+          browser, // Use the launched browser instance
+        },
+      });
 
-    this.client.on('ready', () => {
-      console.log('WhatsApp client is ready!');
-      this.isReady = true; // Set a flag to indicate readiness
-    });
+      this.client.on('qr', (qr) => {
+        qrcode.generate(qr, { small: true });
+        console.log('QR RECEIVED', qr);
+      });
 
-    this.client.on('disconnected', (reason) => {
-      console.log('Client was logged out:', reason);
-      this.isReady = false; // Reset readiness flag
-    });
+      this.client.on('ready', () => {
+        console.log('WhatsApp client is ready!');
+        this.isReady = true;
+      });
 
-    this.isReady = false; // Flag to track if the client is ready
-    this.client.initialize();
+      this.client.on('disconnected', (reason) => {
+        console.log('Client was logged out:', reason);
+        this.isReady = false;
+      });
+
+      this.isReady = false;
+      await this.client.initialize();
+    } catch (error) {
+      console.error('Failed to initialize WhatsApp client:', error);
+      throw error;
+    }
   }
 
   async sendMessage(to, message) {
@@ -43,18 +54,21 @@ class WhatsAppService {
       throw new Error('WhatsApp client is not ready. Please try again later.');
     }
 
-    const chatId = to.replace('+', '') + '@c.us'; // Format the chat ID correctly
+    const chatId = to.replace('+', '') + '@c.us';
     try {
       await this.client.sendMessage(chatId, message);
       console.log(`Message sent to ${to}: ${message}`);
     } catch (error) {
       console.error(`Failed to send message: ${error.message}`);
+      throw error;
     }
   }
 
   async disconnect() {
-    await this.client.destroy();
-    console.log('WhatsApp client disconnected.');
+    if (this.client) {
+      await this.client.destroy();
+      console.log('WhatsApp client disconnected.');
+    }
   }
 }
 
