@@ -1,9 +1,23 @@
 const { Client } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
+const puppeteer = require('puppeteer');
 
 class WhatsAppService {
   constructor() {
-    this.client = new Client(); // Default Puppeteer options are used
+    // Initialize Puppeteer with custom options
+    const puppeteerOptions = {
+      headless: true, // Run in headless mode
+      args: [
+        '--no-sandbox', // Bypass OS security model
+        '--disable-setuid-sandbox', // Bypass the setuid sandbox
+        '--disable-dev-shm-usage', // Overcome limited resource problems
+      ],
+    };
+
+    // Create a new WhatsApp client with Puppeteer options
+    this.client = new Client({
+      puppeteer: puppeteerOptions,
+    });
 
     this.client.on('qr', (qr) => {
       qrcode.generate(qr, { small: true });
