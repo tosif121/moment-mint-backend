@@ -1,6 +1,6 @@
 const { Client } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
 
 class WhatsAppService {
   constructor() {
@@ -9,16 +9,10 @@ class WhatsAppService {
 
   async initialize() {
     try {
-      // Launch the browser using Puppeteer's default bundled Chromium
       const browser = await puppeteer.launch({
-        headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-        ],
+        headless: true, // or false to see the browser UI
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
       });
-
       // Create a new WhatsApp client with the launched browser
       this.client = new Client({
         puppeteer: {
