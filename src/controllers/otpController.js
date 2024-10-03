@@ -1,8 +1,12 @@
 const jwt = require('jsonwebtoken');
 const OtpPresenter = require('../services/OtpPresenter');
+const { User } = require('../models');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'Tosssi@2121';
-
+const generateRandomUsername = () => {
+  const randomNumber = Math.floor(10000 + Math.random() * 90000);
+  return `mint_${randomNumber}`;
+};
 const verifyOtp = async (req, res) => {
   try {
     const { mobileNumber, otp } = req.body;
@@ -17,12 +21,21 @@ const verifyOtp = async (req, res) => {
     const result = await OtpPresenter.verifyOtp({ contactNo: mobileNumber, otp });
 
     if (result.status === 'success') {
+      let user = await User.findOne({ where: { mobile } });
+      if (!user) {
+        const randomUsername = generateRandomUsername();
+        user = await User.create({
+          mobile: mobileNumber,
+          userName: randomUsername,
+        });
+      }
       const token = jwt.sign({ mobileNumber }, JWT_SECRET, { expiresIn: '1h' });
 
       return res.status(200).json({
         status: true,
-        message: result.message,
+        message: 'User registered successfully.',
         token,
+        user: newUser,
       });
     } else {
       return res.status(401).json({

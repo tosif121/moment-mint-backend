@@ -3,9 +3,7 @@ const { Post, User, Comment, Like } = require('../models');
 // Create a new post
 const createPost = async (req, res) => {
   const { activity, imageUrl } = req.body;
-  const userId = req.user.id; // Assuming you have authentication middleware
-
-  // Validate inputs
+  const userId = req.user.id;
   if (!activity || !imageUrl) {
     return res.status(400).json({
       status: false,
@@ -167,7 +165,7 @@ const addComment = async (req, res) => {
     const updatedComments = [...post.comments, comment];
     post.comments = updatedComments;
     await post.save();
-    
+
     return res.status(200).json({
       status: true,
       message: 'Comment added successfully',

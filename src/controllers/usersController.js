@@ -1,23 +1,33 @@
 const { User } = require('../models');
 
-// Create a new user
 const createUser = async (req, res) => {
   try {
-    const { uid, email, userName, photoURL, bio } = req.body;
+    const { userName, mobile } = req.body;
+
+    if (!userName || !mobile) {
+      return res.status(400).json({
+        status: false,
+        message: 'Username and mobile number are required.',
+      });
+    }
 
     const user = await User.create({
-      uid,
-      email,
       userName,
-      photoURL,
+      mobile,
     });
 
-    res.status(200).json({
+    res.status(201).json({
       status: true,
       message: 'User created successfully',
       data: user,
     });
   } catch (error) {
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({
+        status: false,
+        message: 'Username or mobile number already exists.',
+      });
+    }
     res.status(500).json({
       status: false,
       message: 'Internal server error',
@@ -46,12 +56,11 @@ const getAllUsers = async (req, res) => {
 };
 
 // Get a user by ID
-
 const getUserById = async (req, res) => {
   try {
-    const { uid } = req.params;
+    const { id } = req.params;
 
-    const user = await User.findOne({ where: { uid } });
+    const user = await User.findOne({ where: { id } });
     if (!user) {
       return res.status(404).json({
         status: false,
@@ -87,6 +96,7 @@ const updateUserById = async (req, res) => {
       });
     }
 
+    // Update the user
     await user.update({
       displayName: displayName || user.displayName,
       photoURL: photoURL || user.photoURL,
@@ -103,6 +113,12 @@ const updateUserById = async (req, res) => {
       data: user,
     });
   } catch (error) {
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({
+        status: false,
+        message: 'Username or email already exists.',
+      });
+    }
     res.status(500).json({
       status: false,
       message: 'Internal server error',
