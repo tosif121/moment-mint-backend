@@ -22,15 +22,13 @@ module.exports = (sequelize, DataTypes) => {
       },
       imageUrl: {
         type: DataTypes.STRING,
-        allowNull: true, // Changed to allow posts without images
+        allowNull: true,
       },
       likesCount: {
-        // Renamed from 'likes' for clarity
         type: DataTypes.INTEGER,
         defaultValue: 0,
         allowNull: false,
       },
-      // Removed 'comments' field - we'll create a separate Comment model
     },
     {
       timestamps: true,
