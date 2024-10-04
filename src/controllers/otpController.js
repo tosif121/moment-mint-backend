@@ -22,7 +22,7 @@ const verifyOtp = async (req, res) => {
     const result = await OtpPresenter.verifyOtp({ contactNo: mobileNumber, otp });
 
     if (result.status === 'success') {
-      let user = await User.findOne({ where: { mobile: mobileNumber } });
+      let user = await User.findOne({ where: { mobile: mobileNumber } }); 
       if (!user) {
         const randomUsername = generateRandomUsername();
         user = await User.create({
@@ -36,8 +36,8 @@ const verifyOtp = async (req, res) => {
         status: true,
         message: 'User registered successfully.',
         token,
-        user,
-        mobile: user.mobile.toString().replace(/,/g, ''),
+        user, 
+        mobile: user.mobile.toString().replace(/,/g, '')
       });
     } else {
       return res.status(401).json({
@@ -55,6 +55,7 @@ const verifyOtp = async (req, res) => {
     });
   }
 };
+
 
 const checkMobileNumber = async (req, res) => {
   try {
