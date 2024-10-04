@@ -1,39 +1,134 @@
-const { Post, User, Comment, Like } = require('../models');
+const { Post, User, Comment, Like, sequelize } = require('../models');
+const { uploadImageToS3, deleteFromS3 } = require('../services/s3Service');
 
-// Create a new post
-const createPost = async (req, res) => {
-  const { activity, imageUrl } = req.body;
-  const userId = req.user.id;
-  if (!activity || !imageUrl) {
-    return res.status(400).json({
-      status: false,
-      message: 'Activity and imageUrl are required',
-    });
+const handleError = async (res, error, transaction = null) => {
+  if (transaction) {
+    await transaction.rollback();
   }
+  return res.status(500).json({
+    status: false,
+    message: 'Internal server error',
+    error: error.message,
+  });
+};
+
+const getPostWithAssociations = async (id, transaction = null) => {
+  return Post.findByPk(id, {
+    include: [
+      {
+        model: User,
+        as: 'user',
+        attributes: ['id', 'userName', 'profileImg'],
+      },
+      {
+        model: Comment,
+        as: 'comments',
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'userName'],
+          },
+        ],
+        order: [['createdAt', 'DESC']],
+      },
+      {
+        model: Like,
+        as: 'likes',
+        attributes: ['userId'],
+      },
+    ],
+    transaction,
+  });
+};
+
+// Controller functions
+exports.uploadImage = async (req, res) => {
+  const {
+    file,
+    body: { uploadType, activity },
+    user: { id: userId },
+  } = req;
+
+  // Log input data for debugging
+  console.log('File:', file);
+  console.log('Upload Type:', uploadType);
+  console.log('Activity:', activity);
+  console.log('User ID:', userId);
+
+  const folderName = uploadType === 'profile' ? 'profiles' : 'posts';
+
+  const transaction = await sequelize.transaction();
+  console.log('Transaction started');
 
   try {
-    const post = await Post.create({ userId, activity, imageUrl });
-    return res.status(201).json({
+    // Log S3 upload attempt
+    console.log('Uploading image to S3...');
+    const uploadResult = await uploadImageToS3(folderName, file, userId);
+    console.log('Upload Result:', uploadResult);
+
+    let post = null;
+    if (uploadType !== 'profile') {
+      // Log post creation attempt
+      console.log('Creating post...');
+      post = await Post.create(
+        {
+          userId,
+          activity,
+          imageUrl: uploadResult.url,
+        },
+        { transaction }
+      );
+      console.log('Post created:', post);
+    }
+
+    // Commit transaction
+    await transaction.commit();
+    console.log('Transaction committed successfully');
+
+    return res.status(200).json({
       status: true,
-      message: 'Post created successfully',
-      data: post,
+      message: `${uploadType === 'profile' ? 'Profile picture' : 'Post'} uploaded successfully`,
+      data: uploadType === 'profile' ? uploadResult : { uploadResult, post },
     });
   } catch (error) {
-    return handleError(res, error);
+    console.error('Error occurred:', error); // Log the error for debugging
+    return handleError(res, error, transaction); // Handle the error response
   }
 };
 
-// Get all posts
-const getAllPosts = async (req, res) => {
-  const limit = parseInt(req.query.limit) || 10;
-  const offset = parseInt(req.query.offset) || 0;
+
+exports.getFeed = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 20;
+  const offset = (page - 1) * limit;
 
   try {
-    const posts = await Post.findAll({
+    const { count, rows: posts } = await Post.findAndCountAll({
       include: [
-        { model: User, as: 'user', attributes: ['id', 'userName', 'profileImg'] },
-        { model: Comment, as: 'comments', include: [{ model: User, as: 'user', attributes: ['id', 'userName'] }] },
-        { model: Like, as: 'likes', attributes: ['userId'] },
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'userName', 'profileImg'],
+        },
+        {
+          model: Comment,
+          as: 'comments',
+          include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id', 'userName'],
+            },
+          ],
+          limit: 3,
+          order: [['createdAt', 'DESC']],
+        },
+        {
+          model: Like,
+          as: 'likes',
+          attributes: ['userId'],
+        },
       ],
       order: [['createdAt', 'DESC']],
       limit,
@@ -42,29 +137,34 @@ const getAllPosts = async (req, res) => {
 
     return res.status(200).json({
       status: true,
-      message: 'Posts fetched successfully',
-      data: posts,
+      message: 'Feed retrieved successfully',
+      data: {
+        posts,
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(count / limit),
+          hasNextPage: offset + limit < count,
+        },
+      },
     });
   } catch (error) {
     return handleError(res, error);
   }
 };
 
-// Get post by ID
-const getPostById = async (req, res) => {
-  const { id } = req.params;
-
+exports.getPostById = async (req, res) => {
   try {
-    const post = await Post.findByPk(id);
+    const post = await getPostWithAssociations(req.params.id);
     if (!post) {
       return res.status(404).json({
         status: false,
         message: 'Post not found',
       });
     }
+
     return res.status(200).json({
       status: true,
-      message: 'Post fetched successfully',
+      message: 'Post retrieved successfully',
       data: post,
     });
   } catch (error) {
@@ -72,125 +172,148 @@ const getPostById = async (req, res) => {
   }
 };
 
-// Update a post by ID
-const updatePost = async (req, res) => {
+exports.updatePost = async (req, res) => {
   const { id } = req.params;
-  const { activity, imageUrl } = req.body;
+  const { activity } = req.body;
   const userId = req.user.id;
 
+  const transaction = await sequelize.transaction();
+
   try {
-    const post = await Post.findOne({ where: { id, userId } });
+    const post = await Post.findOne({
+      where: { id, userId },
+      transaction,
+    });
+
     if (!post) {
+      await transaction.rollback();
       return res.status(404).json({
         status: false,
         message: 'Post not found or you are not authorized to update this post',
       });
     }
 
-    await post.update({ activity, imageUrl });
+    await post.update({ activity }, { transaction });
+    await transaction.commit();
+
+    const updatedPost = await getPostWithAssociations(id);
     return res.status(200).json({
       status: true,
       message: 'Post updated successfully',
-      data: post,
+      data: updatedPost,
     });
   } catch (error) {
-    return handleError(res, error);
+    return handleError(res, error, transaction);
   }
 };
 
-// Delete a post by ID
-const deletePost = async (req, res) => {
+exports.deletePost = async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;
 
+  const transaction = await sequelize.transaction();
+
   try {
-    const post = await Post.findOne({ where: { id, userId } });
+    const post = await Post.findOne({
+      where: { id, userId },
+      transaction,
+    });
+
     if (!post) {
+      await transaction.rollback();
       return res.status(404).json({
         status: false,
         message: 'Post not found or you are not authorized to delete this post',
       });
     }
 
-    await post.destroy();
+    if (post.imageUrl) {
+      const key = post.imageUrl.split('.com/')[1];
+      await deleteFromS3(key);
+    }
+
+    await post.destroy({ transaction });
+    await transaction.commit();
+
     return res.status(200).json({
       status: true,
       message: 'Post deleted successfully',
     });
   } catch (error) {
-    return handleError(res, error);
+    return handleError(res, error, transaction);
   }
 };
 
-// Update likes for a post
-const updateLikes = async (req, res) => {
+exports.updateLikes = async (req, res) => {
   const { id } = req.params;
-  const { likes } = req.body;
+  const userId = req.user.id;
+
+  const transaction = await sequelize.transaction();
 
   try {
-    const post = await Post.findByPk(id);
-    if (!post) {
-      return res.status(404).json({
-        status: false,
-        message: 'Post not found',
-      });
+    const [like, created] = await Like.findOrCreate({
+      where: {
+        postId: id,
+        userId,
+      },
+      transaction,
+    });
+
+    if (!created) {
+      await like.destroy({ transaction });
+      await Post.decrement('likesCount', { where: { id }, transaction });
+    } else {
+      await Post.increment('likesCount', { where: { id }, transaction });
     }
 
-    post.likes = likes;
-    await post.save();
+    await transaction.commit();
+    const updatedPost = await getPostWithAssociations(id);
+
     return res.status(200).json({
       status: true,
-      message: 'Likes updated successfully',
-      data: post,
+      message: created ? 'Post liked successfully' : 'Post unliked successfully',
+      data: updatedPost,
     });
   } catch (error) {
-    return handleError(res, error);
+    return handleError(res, error, transaction);
   }
 };
 
-// Add a comment to a post
-const addComment = async (req, res) => {
+exports.addComment = async (req, res) => {
   const { id } = req.params;
-  const { comment } = req.body;
+  const { content } = req.body;
+  const userId = req.user.id;
+
+  const transaction = await sequelize.transaction();
 
   try {
-    const post = await Post.findByPk(id);
+    const post = await Post.findByPk(id, { transaction });
     if (!post) {
+      await transaction.rollback();
       return res.status(404).json({
         status: false,
         message: 'Post not found',
       });
     }
 
-    const updatedComments = [...post.comments, comment];
-    post.comments = updatedComments;
-    await post.save();
+    const newComment = await Comment.create(
+      {
+        postId: id,
+        userId,
+        content,
+      },
+      { transaction }
+    );
 
+    await transaction.commit();
+
+    const updatedPost = await getPostWithAssociations(id);
     return res.status(200).json({
       status: true,
       message: 'Comment added successfully',
-      data: post,
+      data: updatedPost,
     });
   } catch (error) {
-    return handleError(res, error);
+    return handleError(res, error, transaction);
   }
-};
-
-// Helper function to handle errors
-const handleError = (res, error) => {
-  return res.status(500).json({
-    status: false,
-    message: 'Internal server error',
-    error: error.message,
-  });
-};
-
-module.exports = {
-  createPost,
-  getAllPosts,
-  getPostById,
-  updatePost,
-  deletePost,
-  updateLikes,
-  addComment,
 };

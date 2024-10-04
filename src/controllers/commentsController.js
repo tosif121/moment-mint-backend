@@ -15,7 +15,7 @@ const createComment = async (req, res) => {
 
   try {
     const comment = await Comment.create({ postId, userId, content });
-    return res.status(201).json({
+    return res.status(200).json({
       status: true,
       message: 'Comment created successfully',
       data: comment,

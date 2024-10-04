@@ -35,7 +35,7 @@ const toggleLike = async (req, res) => {
         await Comment.increment('likesCount', { where: { id: commentId } });
       }
 
-      return res.status(201).json({ status: true, message: 'Like added successfully', like });
+      return res.status(200).json({ status: true, message: 'Like added successfully', like });
     }
   } catch (error) {
     return handleError(res, error);
