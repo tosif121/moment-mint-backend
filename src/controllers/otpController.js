@@ -7,6 +7,7 @@ const generateRandomUsername = () => {
   const randomNumber = Math.floor(10000 + Math.random() * 90000);
   return `mint_${randomNumber}`;
 };
+
 const verifyOtp = async (req, res) => {
   try {
     const { mobileNumber, otp } = req.body;
@@ -21,7 +22,7 @@ const verifyOtp = async (req, res) => {
     const result = await OtpPresenter.verifyOtp({ contactNo: mobileNumber, otp });
 
     if (result.status === 'success') {
-      let user = await User.findOne({ where: { mobile } });
+      let user = await User.findOne({ where: { mobile: mobileNumber } }); 
       if (!user) {
         const randomUsername = generateRandomUsername();
         user = await User.create({
@@ -30,12 +31,13 @@ const verifyOtp = async (req, res) => {
         });
       }
       const token = jwt.sign({ mobileNumber }, JWT_SECRET, { expiresIn: '1h' });
-
+      console.log(result, 'result');
       return res.status(200).json({
         status: true,
         message: 'User registered successfully.',
         token,
-        user: newUser,
+        user, 
+        mobile: user.mobile.toString().replace(/,/g, '')
       });
     } else {
       return res.status(401).json({
@@ -53,6 +55,7 @@ const verifyOtp = async (req, res) => {
     });
   }
 };
+
 
 const checkMobileNumber = async (req, res) => {
   try {

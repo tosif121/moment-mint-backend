@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       email: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
         unique: true,
         validate: {
           isEmail: true,
@@ -54,10 +54,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       mobile: {
         type: DataTypes.STRING,
-        allowNull: true,
-        validate: {
-          is: /^[0-9]+$/,
-        },
+        allowNull: false,     
       },
       dob: {
         type: DataTypes.DATEONLY,
@@ -80,6 +77,7 @@ module.exports = (sequelize, DataTypes) => {
       tableName: 'Users',
     }
   );
+  // User.sync({ alter: true });
 
   User.associate = (models) => {
     User.hasMany(models.Post, { foreignKey: 'userId', as: 'posts' });
