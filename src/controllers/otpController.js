@@ -51,7 +51,7 @@ const verifyOtp = async (req, res) => {
     return res.status(500).json({
       status: false,
       message: 'Internal server error',
-      error: 'You entered a wrong OTP',
+      error: error.message,
     });
   }
 };

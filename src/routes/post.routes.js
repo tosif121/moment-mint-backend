@@ -1,29 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const { validateUploadRequest } = require('../middlewares/validation');
-const { uploadImage, getFeed, getPostById, deletePost } = require('../controllers/postController');
+const { createPost, getAllPosts, getPostById, updatePost, deletePost } = require('../controllers/postController');
 const authMiddleware = require('../middlewares/authMiddleware');
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 52428800 },
-});
+router.post('/posts', authMiddleware, createPost);
 
-router.post(
-  '/upload',
-  authMiddleware,
-  (req, res, next) => {
-    console.log(req.body);
-    next();
-  },
-  upload.single('image'),
-  validateUploadRequest,
-  uploadImage
-);
+router.get('/posts', authMiddleware, getAllPosts);
 
-router.get('/feed', authMiddleware, getFeed);
-router.get('/:id', authMiddleware, getPostById);
-router.post('/:id', authMiddleware, deletePost);
+router.get('/posts/:id', authMiddleware, getPostById);
+
+router.post('/posts/:id', authMiddleware, updatePost);
+
+router.post('/posts/:id', authMiddleware, deletePost);
 
 module.exports = router;

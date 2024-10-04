@@ -24,7 +24,7 @@ const toggleFollow = async (req, res) => {
       await User.increment('followersCount', { where: { id: followingId } });
       await User.increment('followingCount', { where: { id: followerId } });
 
-      return res.status(200).json({ status: true, message: 'Followed successfully', follow });
+      return res.status(201).json({ status: true, message: 'Followed successfully', follow });
     }
   } catch (error) {
     return handleError(res, error);

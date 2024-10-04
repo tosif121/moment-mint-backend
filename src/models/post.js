@@ -33,17 +33,10 @@ module.exports = (sequelize, DataTypes) => {
     {
       timestamps: true,
       tableName: 'Posts',
-      indexes: [
-        {
-          fields: ['userId'],
-        },
-        {
-          fields: ['createdAt'],
-        },
-      ],
     }
   );
-  // Post.sync({ alter: true });
+
+  // Associations
   Post.associate = (models) => {
     Post.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
     Post.hasMany(models.Comment, { foreignKey: 'postId', as: 'comments' });

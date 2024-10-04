@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const userRoutes = require('./src/routes/users.routes');
 const postRoutes = require('./src/routes/post.routes');
+const imageRoutes = require('./src/routes/upload.routes');
 const otpRoutes = require('./src/routes/otp.routes');
 const app = express();
 const dotenv = require('dotenv').config();
@@ -22,7 +23,7 @@ app.get('/api/hello', (req, res) => {
 });
 
 // Existing routes
-app.use('/api', userRoutes, postRoutes, otpRoutes);
+app.use('/api', userRoutes, imageRoutes, postRoutes, otpRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

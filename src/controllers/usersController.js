@@ -16,7 +16,7 @@ const createUser = async (req, res) => {
       mobile,
     });
 
-    res.status(200).json({
+    res.status(201).json({
       status: true,
       message: 'User created successfully',
       data: user,

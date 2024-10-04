@@ -20,7 +20,7 @@ fs.readdirSync(__dirname)
   });
 
 // Uncomment this line to sync your models with the database
-sequelize.sync();
+// sequelize.sync();
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
