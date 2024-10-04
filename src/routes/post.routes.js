@@ -10,9 +10,20 @@ const upload = multer({
   limits: { fileSize: 52428800 },
 });
 
-router.post('/upload', authMiddleware, upload.single('image'), validateUploadRequest, uploadImage);
+router.post(
+  '/upload',
+  authMiddleware,
+  (req, res, next) => {
+    console.log(req.body);
+    next();
+  },
+  upload.single('image'),
+  validateUploadRequest,
+  uploadImage
+);
+
 router.get('/feed', authMiddleware, getFeed);
 router.get('/:id', authMiddleware, getPostById);
-router.delete('/:id', authMiddleware, deletePost);
+router.post('/:id', authMiddleware, deletePost);
 
 module.exports = router;
