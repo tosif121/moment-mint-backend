@@ -77,12 +77,14 @@ module.exports = (sequelize, DataTypes) => {
       tableName: 'Users',
     }
   );
-  // User.sync({ alter: true });
 
+  // Associations
   User.associate = (models) => {
     User.hasMany(models.Post, { foreignKey: 'userId', as: 'posts' });
     User.hasMany(models.Comment, { foreignKey: 'userId', as: 'comments' });
     User.hasMany(models.Like, { foreignKey: 'userId', as: 'likes' });
+    
+    // Follower and following associations
     User.hasMany(models.Follow, { foreignKey: 'followerId', as: 'following' });
     User.hasMany(models.Follow, { foreignKey: 'followingId', as: 'followers' });
   };

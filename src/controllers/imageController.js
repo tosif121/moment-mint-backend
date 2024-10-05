@@ -9,9 +9,9 @@ const s3Client = new S3Client({
   credentials: fromEnv(),
 });
 
-async function uploadImageToS3(folderName, file, userId) {
+async function uploadImageToS3(folderName, file) {
   const timestamp = Date.now();
-  const fileName = `${userId}_${timestamp}_${file.originalname.replace(/\s+/g, '_')}`;
+  const fileName = `${timestamp}_${file.originalname.replace(/\s+/g, '_')}`;
 
   const params = {
     Bucket: AWS_S3_BUCKET,
@@ -26,7 +26,6 @@ async function uploadImageToS3(folderName, file, userId) {
     return {
       url: `https://${AWS_S3_BUCKET}.s3.${AWS_REGION}.amazonaws.com/${folderName}/${fileName}`,
       key: `${folderName}/${fileName}`,
-      userId,
       timestamp,
     };
   } catch (err) {
@@ -36,57 +35,32 @@ async function uploadImageToS3(folderName, file, userId) {
 }
 
 exports.uploadImage = async (req, res) => {
-  const file = req.file;
-  const { userId, uploadType, activity } = req.body;
-
-  console.log('Received upload request:', { userId, uploadType, activity }); // Add this line for debugging
-
-  if (!file) {
-    return res.status(400).json({ status: false, message: 'No file uploaded' });
-  }
-
-  if (file.size > 52428800) {
-    return res.status(400).json({ status: false, message: 'File size must be less than 50MB' });
-  }
-
-  const folderName = uploadType === 'profile' ? 'profiles' : 'posts';
-
   try {
-    // Upload the image to S3
-    const uploadResult = await uploadImageToS3(folderName, file, userId);
+    const file = req.file;
+    const { uploadType, activity } = req.body;
+    if (!file) {
+      return res.status(400).json({ message: 'No file uploaded.' });
+    }
+    const s3Result = await uploadImageToS3(uploadType, file,);
 
-    // Create the post after successful image upload
-    const post = await createPost({
-      uid: userId,
+    return res.status(200).json({
+      imageUrl: s3Result.url,
+      message: 'Image uploaded successfully.',
+      fileName: file.originalname,
+      uploadType,
       activity,
-      imageUrl: uploadResult.url,
-    });
-
-    // Send a response with the complete post data
-    res.status(200).json({
-      status: true,
-      message: `${uploadType === 'profile' ? 'Profile picture' : 'Post'} uploaded successfully`,
-      data: { uploadResult, post },
+      timestamp: s3Result.timestamp,
     });
   } catch (error) {
-    console.error('Upload process error:', error);
-    res.status(500).json({
-      status: false,
-      message: 'Internal server error',
-      error: error.message,
-    });
+    console.error('Error uploading image:', error);
+    return res.status(500).json({ message: 'Internal server error.' });
   }
 };
-
 
 exports.getUserProfile = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    // Fetch user profile data from your database
-    // const userProfile = await getUserProfileFromDatabase(userId);
-
-    // For this example, we'll just return the latest profile picture
     const params = {
       Bucket: AWS_S3_BUCKET,
       Prefix: `profiles/${userId}_`,
@@ -105,7 +79,6 @@ exports.getUserProfile = async (req, res) => {
       data: {
         userId,
         profilePicture,
-        // Include other user profile data here
       },
     });
   } catch (error) {
@@ -122,8 +95,6 @@ exports.getFeed = async (req, res) => {
   const { page = 1, limit = 20 } = req.query;
 
   try {
-    // In a real app, you'd fetch posts from your database, ordered by timestamp
-    // Here's a simplified version using S3 directly (not recommended for production)
     const params = {
       Bucket: AWS_S3_BUCKET,
       Prefix: 'posts/',
