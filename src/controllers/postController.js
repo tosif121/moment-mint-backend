@@ -5,7 +5,7 @@ const { uploadImageToS3 } = require('../services/s3Service');
 exports.createPost = async (req, res) => {
   try {
     const { activity } = req.body; // Only activity from the body
-    const userId = req.user.id;    // Get userId from the authenticated user
+    const userId = req.user.id; // Get userId from the authenticated user
 
     if (!userId || !activity) {
       return res.status(400).json({ message: 'User ID and activity are required.' });
@@ -32,6 +32,54 @@ exports.createPost = async (req, res) => {
   } catch (error) {
     console.error('Error creating post:', error);
     return res.status(500).json({ message: 'Internal server error.', error: error.message });
+  }
+};
+
+// Get posts for the currently logged-in user
+exports.getCurrentUserPosts = async (req, res) => {
+  const userId = req.user.id;
+console.log(userId)
+  try {
+    console.log("Fetching posts for userId:", userId);
+    
+    const posts = await Post.findAll({
+      where: { userId },
+      include: [
+        { model: User, as: 'user', attributes: ['id', 'userName', 'profileImg'] },
+        {
+          model: Comment,
+          as: 'comments',
+          include: [{ model: User, as: 'user', attributes: ['id', 'userName'] }],
+        },
+        { model: Like, as: 'likes', attributes: ['userId'] },
+      ],
+      attributes: {
+        include: [['imageUrl', 'image'], 'likesCount'],
+      },
+      order: [['createdAt', 'DESC']],
+    });
+    if (!posts || posts.length === 0) {
+      return res.status(404).json({
+        status: false,
+        message: 'No posts found for the current user.',
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: 'User posts fetched successfully',
+      data: posts.map((post) => ({
+        id: post.id,
+        activity: post.activity,
+        imageUrl: post.imageUrl,
+        likesCount: post.likesCount,
+        user: post.user,
+        comments: post.comments,
+      })),
+    });
+  } catch (error) {
+    console.error("Error fetching user posts:", error);
+    return res.status(500).json({ status: false, message: 'An error occurred while fetching posts.', error: error.message });
   }
 };
 

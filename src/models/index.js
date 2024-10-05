@@ -19,9 +19,15 @@ fs.readdirSync(__dirname)
     db[model.name] = model;
   });
 
+// Initialize associations
+Object.keys(db).forEach((modelName) => {
+  if (db[modelName].associate) {
+    db[modelName].associate(db);
+  }
+});
+
 // Uncomment this line to sync your models with the database
 // sequelize.sync();
-
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 

@@ -54,7 +54,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       mobile: {
         type: DataTypes.STRING,
-        allowNull: false,     
+        allowNull: false,
       },
       dob: {
         type: DataTypes.DATEONLY,
@@ -78,12 +78,14 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
 
+  // User.sync({alter:true})
   // Associations
   User.associate = (models) => {
+    console.log('Setting up User associations');
     User.hasMany(models.Post, { foreignKey: 'userId', as: 'posts' });
     User.hasMany(models.Comment, { foreignKey: 'userId', as: 'comments' });
     User.hasMany(models.Like, { foreignKey: 'userId', as: 'likes' });
-    
+
     // Follower and following associations
     User.hasMany(models.Follow, { foreignKey: 'followerId', as: 'following' });
     User.hasMany(models.Follow, { foreignKey: 'followingId', as: 'followers' });

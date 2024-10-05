@@ -30,7 +30,7 @@ const verifyOtp = async (req, res) => {
           userName: randomUsername,
         });
       }
-      const token = jwt.sign({ mobileNumber, id: user.id }, JWT_SECRET, { expiresIn: '1h' });
+      const token = jwt.sign({ mobileNumber, id: user.id }, JWT_SECRET, { expiresIn: '30d' });
       console.log(result, 'result');
       return res.status(200).json({
         status: true,
