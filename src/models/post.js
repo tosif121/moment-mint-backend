@@ -36,6 +36,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
 
+  // Post.sync({alter:true})
   // Associations
   Post.associate = (models) => {
     Post.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
