@@ -38,14 +38,25 @@ exports.createPost = async (req, res) => {
 // Get posts for the currently logged-in user
 exports.getCurrentUserPosts = async (req, res) => {
   const userId = req.user.id;
-console.log(userId)
   try {
-    console.log("Fetching posts for userId:", userId);
-    
     const posts = await Post.findAll({
       where: { userId },
       include: [
-        { model: User, as: 'user', attributes: ['id', 'userName', 'profileImg'] },
+        {
+          model: User,
+          as: 'user',
+          attributes: [
+            'id',
+            'userName',
+            'profileImg',
+            'displayName',
+            'followersCount',
+            'followingCount',
+            'bio',
+            'coins',
+            'streak',
+          ],
+        },
         {
           model: Comment,
           as: 'comments',
@@ -78,11 +89,12 @@ console.log(userId)
       })),
     });
   } catch (error) {
-    console.error("Error fetching user posts:", error);
-    return res.status(500).json({ status: false, message: 'An error occurred while fetching posts.', error: error.message });
+    console.error('Error fetching user posts:', error);
+    return res
+      .status(500)
+      .json({ status: false, message: 'An error occurred while fetching posts.', error: error.message });
   }
 };
-
 
 // Get all posts
 exports.getAllPosts = async (req, res) => {

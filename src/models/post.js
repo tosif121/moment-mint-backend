@@ -39,7 +39,6 @@ module.exports = (sequelize, DataTypes) => {
   // Post.sync({alter:true})
   // Associations
   Post.associate = (models) => {
-    console.log('Setting up Post associations');
     Post.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
     Post.hasMany(models.Comment, { foreignKey: 'postId', as: 'comments' });
     Post.hasMany(models.Like, { foreignKey: 'postId', as: 'likes' });
