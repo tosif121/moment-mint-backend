@@ -84,7 +84,7 @@ const getUserById = async (req, res) => {
 // Update a user by ID
 const updateUserById = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.body;
     const { displayName, photoURL, bio, userName, mobile, dob, gender } = req.body;
 
     const user = await User.findByPk(id);
@@ -130,8 +130,7 @@ const updateUserById = async (req, res) => {
 // Delete a user by ID
 const deleteUserById = async (req, res) => {
   try {
-    const { id } = req.params;
-
+    const { id } = req.body;
     const user = await User.findByPk(id);
 
     if (!user) {

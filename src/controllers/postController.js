@@ -165,7 +165,7 @@ exports.getPostById = async (req, res) => {
 
 // Update a post by ID
 exports.updatePost = async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.body;
   const { activity } = req.body;
   const userId = req.user.id;
 
@@ -198,7 +198,7 @@ exports.updatePost = async (req, res) => {
 
 // Delete a post by ID
 exports.deletePost = async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.body;
   const userId = req.user.id;
 
   try {
@@ -222,7 +222,7 @@ exports.deletePost = async (req, res) => {
 
 // Update likes for a post
 exports.updateLikes = async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.body;
   const { likes } = req.body;
 
   try {
@@ -247,7 +247,7 @@ exports.updateLikes = async (req, res) => {
 
 // Add a comment to a post
 exports.addComment = async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.body;
   const { comment } = req.body;
 
   try {
