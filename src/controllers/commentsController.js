@@ -3,9 +3,8 @@ const { Comment, User } = require('../models');
 // Create a new comment
 const createComment = async (req, res) => {
   const { postId, content } = req.body;
-  const userId = req.user.id; // Assuming you have authentication middleware
+  const userId = req.user.id;
 
-  // Validate inputs
   if (!postId || !content) {
     return res.status(400).json({
       status: false,

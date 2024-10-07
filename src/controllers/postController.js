@@ -4,8 +4,8 @@ const { uploadImageToS3 } = require('../services/s3Service');
 // Create a new post
 exports.createPost = async (req, res) => {
   try {
-    const { activity } = req.body; // Only activity from the body
-    const userId = req.user.id; // Get userId from the authenticated user
+    const { activity } = req.body;
+    const userId = req.user.id;
 
     if (!userId || !activity) {
       return res.status(400).json({ message: 'User ID and activity are required.' });
@@ -69,12 +69,6 @@ exports.getCurrentUserPosts = async (req, res) => {
       },
       order: [['createdAt', 'DESC']],
     });
-    if (!posts || posts.length === 0) {
-      return res.status(404).json({
-        status: false,
-        message: 'No posts found for the current user.',
-      });
-    }
 
     return res.status(200).json({
       status: true,
@@ -220,8 +214,7 @@ exports.updateLikes = async (req, res) => {
       });
     }
 
-    // Update the likes count or add a new like
-    await post.update({ likesCount: likes.length }); // Assuming likes is an array of user IDs
+    await post.update({ likesCount: likes.length });
     return res.status(200).json({
       status: true,
       message: 'Likes updated successfully',
@@ -246,7 +239,6 @@ exports.addComment = async (req, res) => {
       });
     }
 
-    // Add the comment and save it
     const newComment = await Comment.create({ postId: id, content: comment });
     return res.status(200).json({
       status: true,

@@ -4,7 +4,7 @@ const { Follow, User } = require('../models');
 const toggleFollow = async (req, res) => {
   try {
     const { followingId } = req.body;
-    const followerId = req.user.id; // Assuming you have authentication middleware
+    const followerId = req.user.id; 
 
     if (followerId === followingId) {
       return res.status(400).json({ status: false, message: 'You cannot follow yourself' });

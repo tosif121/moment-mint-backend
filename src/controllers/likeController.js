@@ -4,7 +4,7 @@ const { Like, Post, Comment, User } = require('../models');
 const toggleLike = async (req, res) => {
   try {
     const { postId, commentId } = req.body;
-    const userId = req.user.id; // Assuming you have authentication middleware
+    const userId = req.user.id; 
 
     let like;
     if (postId) {
@@ -15,11 +15,9 @@ const toggleLike = async (req, res) => {
       return res.status(400).json({ status: false, message: 'Either postId or commentId is required' });
     }
 
-    // If the like already exists, remove it
     if (!like.isNewRecord) {
       await like.destroy();
       
-      // Decrement likes count
       if (postId) {
         await Post.decrement('likesCount', { where: { id: postId } });
       } else if (commentId) {
@@ -28,7 +26,6 @@ const toggleLike = async (req, res) => {
 
       return res.status(200).json({ status: true, message: 'Like removed successfully' });
     } else {
-      // Increment likes count
       if (postId) {
         await Post.increment('likesCount', { where: { id: postId } });
       } else if (commentId) {
