@@ -99,26 +99,5 @@ Note: Routes marked with (requires authentication) need a valid authentication t
    - You'll need to scan a QR code to set up WhatsApp Web integration
    - Follow the console prompts when starting the server to complete this setup
 
-## Contributing
-
-We welcome contributions to Moment Mint! Here's how you can help:
-
-1. Fork the repository
-2. Create a new branch: `git checkout -b feature-branch-name`
-3. Make your changes and commit them: `git commit -m 'Add some feature'`
-4. Push to the branch: `git push origin feature-branch-name`
-5. Submit a pull request
-
-Please ensure your code adheres to our coding standards and include tests for new features.
-
-## License
-
-This project is licensed under the [specify your license type here, e.g., MIT License] - see the [LICENSE.md](LICENSE.md) file for details.
-
-## Contact
-
-For questions or feedback, please contact [Your Name/Team Name] at [contact email].
-
----
 
 Thank you for your interest in Moment Mint! We're excited to see the moments you'll share and the digital assets you'll create.
