@@ -39,24 +39,33 @@ exports.createPost = async (req, res) => {
 exports.getCurrentUserPosts = async (req, res) => {
   const userId = req.user.id;
   try {
+    // Fetch the user's details
+    const user = await User.findOne({
+      where: { id: userId },
+      attributes: [
+        'id',
+        'userName',
+        'profileImg',
+        'displayName',
+        'followersCount',
+        'followingCount',
+        'bio',
+        'coins',
+        'streak',
+      ],
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: 'User not found',
+      });
+    }
+
+    // Fetch the user's posts
     const posts = await Post.findAll({
       where: { userId },
       include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: [
-            'id',
-            'userName',
-            'profileImg',
-            'displayName',
-            'followersCount',
-            'followingCount',
-            'bio',
-            'coins',
-            'streak',
-          ],
-        },
         {
           model: Comment,
           as: 'comments',
@@ -70,17 +79,24 @@ exports.getCurrentUserPosts = async (req, res) => {
       order: [['createdAt', 'DESC']],
     });
 
+    const formattedPosts = posts.map((post) => ({
+      id: post.id,
+      activity: post.activity,
+      imageUrl: post.imageUrl,
+      likesCount: post.likesCount,
+      comments: post.comments,
+    }));
+
     return res.status(200).json({
       status: true,
-      message: 'User posts fetched successfully',
-      data: posts.map((post) => ({
-        id: post.id,
-        activity: post.activity,
-        imageUrl: post.imageUrl,
-        likesCount: post.likesCount,
-        user: post.user,
-        comments: post.comments,
-      })),
+      message:
+        posts.length > 0
+          ? 'User posts fetched successfully'
+          : 'No posts found, but user details retrieved successfully',
+      data: {
+        user,
+        posts: formattedPosts,
+      },
     });
   } catch (error) {
     console.error('Error fetching user posts:', error);

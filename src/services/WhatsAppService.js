@@ -5,7 +5,7 @@ class WhatsAppService {
   constructor() {
     this.client = new Client({
       puppeteer: {
-        args: ['--no-sandbox', '--disable-setuid-sandbox'], // Add Puppeteer options here
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
       },
     });
 
