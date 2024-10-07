@@ -6,7 +6,7 @@ const { createComment, getComments, updateComment, deleteComment } = require('..
 // Comment routes
 router.post('/createComment', authMiddleware, createComment);
 router.get('/posts/:postId', authMiddleware, getComments);
-router.post('/updateComment:id', authMiddleware, updateComment);
-router.post('/deleteComment:id', authMiddleware, deleteComment);
+router.post('/updateComment', authMiddleware, updateComment);
+router.post('/deleteComment', authMiddleware, deleteComment);
 
 module.exports = router;

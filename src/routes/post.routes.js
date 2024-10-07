@@ -18,7 +18,7 @@ router.post('/createPosts', authMiddleware, upload.single('file'), createPost);
 router.get('/posts', authMiddleware, getAllPosts);
 router.get('/myPosts', authMiddleware, getCurrentUserPosts);
 router.get('/posts/:id', authMiddleware, getPostById);
-router.post('/posts/:id', authMiddleware, upload.single('file'), updatePost);
-router.post('/posts/:id', authMiddleware, deletePost);
+router.post('/updatePosts', authMiddleware, upload.single('file'), updatePost);
+router.post('/deletePosts', authMiddleware, deletePost);
 
 module.exports = router;
