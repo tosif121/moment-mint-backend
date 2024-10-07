@@ -44,14 +44,18 @@ exports.getCurrentUserPosts = async (req, res) => {
       where: { id: userId },
       attributes: [
         'id',
+        'email',
         'userName',
-        'profileImg',
         'displayName',
-        'followersCount',
+        'profileImg',
         'followingCount',
-        'bio',
-        'coins',
+        'followersCount',
         'streak',
+        'coins',
+        'mobile',
+        'dob',
+        'gender',
+        'bio',
       ],
     });
 
