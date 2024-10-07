@@ -17,8 +17,6 @@ Experience the joy of sharing, earn rewards, and immortalize your memories in th
 - [Usage](#usage)
 - [API Reference](#api-reference)
 - [Configuration](#configuration)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Installation
 
